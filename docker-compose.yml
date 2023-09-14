@@ -28,19 +28,25 @@ services:
     volumes: 
       - .:/sim_ws/src/f1tenth_gym_ros
     environment:
-      - DISPLAY=novnc:0.0
+      - DISPLAY=selenoid_vnc:99.0
     networks:
       - x11
     stdin_open: true
     tty: true 
-  novnc:  
-    image: theasp/novnc:latest
-    environment:
-      - DISPLAY_WIDTH=1728
-      - DISPLAY_HEIGHT=972
+
+  selenoid_vnc:
+    image: selenoid/vnc:chrome_91.0
+    container_name: selenoid_vnc
     ports:
-      - "8080:8080"
+      - "4444:4444"
+      - "5900:5900"
+    environment:
+      - ENABLE_VNC=true
+    cap_add:
+      - SYS_ADMIN
+    restart: "no"
     networks:
       - x11
+
 networks:
   x11:

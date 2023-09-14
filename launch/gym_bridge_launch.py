@@ -22,6 +22,8 @@
 
 from launch import LaunchDescription
 from launch_ros.actions import Node
+from launch.actions import IncludeLaunchDescription
+from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 from launch.substitutions import Command
 from ament_index_python.packages import get_package_share_directory
 import os
@@ -83,13 +85,39 @@ def generate_launch_description():
         remappings=[('/robot_description', 'opp_robot_description')]
     )
 
+    # ros2 launch rosbridge_server rosbridge_websocket_launch.xml
+    bridge_launch = IncludeLaunchDescription(
+        XMLLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('rosbridge_server'),
+                         'launch', 'rosbridge_websocket_launch.xml')))
+
+
     # finalize
-    ld.add_action(rviz_node)
+    # ld.add_action(rviz_node)
     ld.add_action(bridge_node)
     ld.add_action(nav_lifecycle_node)
     ld.add_action(map_server_node)
     ld.add_action(ego_robot_publisher)
     if has_opp:
         ld.add_action(opp_robot_publisher)
+    ld.add_action(bridge_launch)
+    if teleop:
+        # joystick teleop
+        ld.add_action(Node(
+            package='teleop_twist_joy',
+            executable='teleop_node',
+            name='teleop_twist_joy',
+            parameters=[{'require_enable_button': False, 'axis_linear.x': 1, 'axis_angular.yaw': 0}],
+        ))
+        # joy node
+        ld.add_action(Node(
+            package='joy',
+            executable='joy_node',
+            name='joy_node',
+            parameters=[{'dev': '/dev/input/js0'}],
+        ))
+
+
+
 
     return ld

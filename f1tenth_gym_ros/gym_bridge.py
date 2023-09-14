@@ -65,6 +65,7 @@ class GymBridge(Node):
         self.declare_parameter('sy1')
         self.declare_parameter('stheta1')
         self.declare_parameter('kb_teleop')
+        self.declare_parameter('use_odom_est')
 
         # check num_agents
         num_agents = self.get_parameter('num_agent').value
@@ -96,6 +97,7 @@ class GymBridge(Node):
         self.angle_inc = scan_fov / scan_beams
         self.ego_namespace = self.get_parameter('ego_namespace').value
         ego_odom_topic = self.ego_namespace + '/' + self.get_parameter('ego_odom_topic').value
+        self.use_odom_est = self.get_parameter('use_odom_est').value or False
         self.scan_distance_to_base_link = self.get_parameter('scan_distance_to_base_link').value
         
         if num_agents == 2:
@@ -331,7 +333,10 @@ class GymBridge(Node):
         ego_ts = TransformStamped()
         ego_ts.transform = ego_t
         ego_ts.header.stamp = ts
-        ego_ts.header.frame_id = 'map'
+        if self.use_odom_est:
+            ego_ts.header.frame_id = self.ego_namespace + '/odom'
+        else:
+            ego_ts.header.frame_id = 'map'
         ego_ts.child_frame_id = self.ego_namespace + '/base_link'
         self.br.sendTransform(ego_ts)
 
@@ -349,7 +354,10 @@ class GymBridge(Node):
             opp_ts = TransformStamped()
             opp_ts.transform = opp_t
             opp_ts.header.stamp = ts
-            opp_ts.header.frame_id = 'map'
+            if self.use_odom_est:
+                opp_ts.header.frame_id = self.opp_namespace + '/odom'
+            else:
+                opp_ts.header.frame_id = 'map'
             opp_ts.child_frame_id = self.opp_namespace + '/base_link'
             self.br.sendTransform(opp_ts)
 
