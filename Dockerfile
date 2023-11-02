@@ -43,7 +43,9 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
 RUN --mount=type=cache,target=/root/.cache pip3 install transforms3d
 
 # f1tenth gym
-RUN git clone https://github.com/f1tenth/f1tenth_gym
+# RUN git clone https://github.com/f1tenth/f1tenth_gym
+RUN mkdir -p /f1tenth_gym
+COPY f1tenth_gym f1tenth_gym
 RUN --mount=type=cache,target=/root/.cache cd f1tenth_gym && \
     pip3 install -e .
 
@@ -70,4 +72,4 @@ WORKDIR '/sim_ws'
 # run the gym bridge instead
 
 # source the workspace and run the bridge
-ENTRYPOINT ["bash", "-c", "source /sim_ws/install/setup.bash && source wait_for_x.bash && ros2 launch f1tenth_gym_ros gym_bridge_launch.py"]
+ENTRYPOINT ["bash", "-c", "source /sim_ws/install/setup.bash && ros2 launch f1tenth_gym_ros gym_bridge_launch.py"]

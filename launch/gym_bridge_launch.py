@@ -39,6 +39,7 @@ def generate_launch_description():
     config_dict = yaml.safe_load(open(config, 'r'))
     has_opp = config_dict['bridge']['ros__parameters']['num_agent'] > 1
     teleop = config_dict['bridge']['ros__parameters']['kb_teleop']
+    js_device = config_dict['bridge']['ros__parameters']['js_device']
 
     bridge_node = Node(
         package='f1tenth_gym_ros',
@@ -101,21 +102,21 @@ def generate_launch_description():
     if has_opp:
         ld.add_action(opp_robot_publisher)
     ld.add_action(bridge_launch)
-    if teleop:
+    # if teleop:
         # joystick teleop
-        ld.add_action(Node(
-            package='teleop_twist_joy',
-            executable='teleop_node',
-            name='teleop_twist_joy',
-            parameters=[{'require_enable_button': False, 'axis_linear.x': 1, 'axis_angular.yaw': 0}],
-        ))
+        # ld.add_action(Node(
+        #     package='teleop_twist_joy',
+        #     executable='teleop_node',
+        #     name='teleop_twist_joy',
+        #     parameters=[{'require_enable_button': False, 'axis_linear.x': 1, 'axis_angular.yaw': 0}],
+        # ))
         # joy node
-        ld.add_action(Node(
-            package='joy',
-            executable='joy_node',
-            name='joy_node',
-            parameters=[{'dev': '/dev/input/js0'}],
-        ))
+    ld.add_action(Node(
+        package='joy',
+        executable='joy_node',
+        name='joy_node',
+        parameters=[{'dev': js_device}],
+    ))
 
 
 
