@@ -26,8 +26,8 @@ SHELL ["/bin/bash", "-c"]
 
 # dependencies
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
-RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
-    --mount=target=/var/cache/apt,type=cache,sharing=locked \
+RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=private \
+    --mount=target=/var/cache/apt,type=cache,sharing=private \
     apt-get update --fix-missing && \
     apt-get install -y git \
                        nano \
@@ -52,8 +52,8 @@ RUN --mount=type=cache,target=/root/.cache cd f1tenth_gym && \
 # ros2 gym bridge
 RUN mkdir -p sim_ws/src/f1tenth_gym_ros
 COPY ./package.xml /sim_ws/src/f1tenth_gym_ros/
-RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
-    --mount=target=/var/cache/apt,type=cache,sharing=locked \
+RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=private \
+    --mount=target=/var/cache/apt,type=cache,sharing=private \
     source /opt/ros/foxy/setup.bash && \
     cd sim_ws/ && \
     rosdep install -i --from-path src --rosdistro foxy -y
