@@ -90,11 +90,11 @@ def generate_launch_description():
     bridge_launch = IncludeLaunchDescription(
         XMLLaunchDescriptionSource(
             os.path.join(get_package_share_directory('rosbridge_server'),
-                         'launch', 'rosbridge_websocket_launch.xml')))
-
+                         'launch', 'rosbridge_websocket_launch.xml')),
+        launch_arguments={'use_compression': 'true'}.items())
 
     # finalize
-    # ld.add_action(rviz_node)
+    ld.add_action(rviz_node)
     ld.add_action(bridge_node)
     ld.add_action(nav_lifecycle_node)
     ld.add_action(map_server_node)

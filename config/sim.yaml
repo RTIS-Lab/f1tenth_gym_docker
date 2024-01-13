@@ -34,7 +34,7 @@ bridge:
     opp_ego_odom_topic: 'opp_odom'
     opp_drive_topic: 'opp_drive'
 
-    use_odom_est: True
+    use_odom_est: False
 
     # transform related
     scan_distance_to_base_link: 0.0
@@ -45,6 +45,7 @@ bridge:
 
     # map parameters
     map_path: '/sim_ws/src/f1tenth_gym_ros/maps/f1tenth_racetracks/Austin/Austin_map'
+    # map_path: '/sim_ws/src/f1tenth_gym_ros/maps/f1tenth_racetracks/Oschersleben/Oschersleben_map'
     map_img_ext: '.png'
 
     # opponent parameters
@@ -62,3 +63,6 @@ bridge:
 
     # teleop
     kb_teleop: True
+    js_device: '/dev/input/js0'
+
+    synchronous: False

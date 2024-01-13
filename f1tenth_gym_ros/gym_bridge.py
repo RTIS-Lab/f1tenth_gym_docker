@@ -33,6 +33,9 @@ from geometry_msgs.msg import Transform
 from geometry_msgs.msg import Quaternion
 from ackermann_msgs.msg import AckermannDriveStamped
 from tf2_ros import TransformBroadcaster
+# for publishing ground-truth car state:
+from std_msgs.msg import Float64MultiArray, Float64
+from std_msgs.msg import Bool
 
 import gym
 import numpy as np
@@ -66,6 +69,7 @@ class GymBridge(Node):
         self.declare_parameter('stheta1')
         self.declare_parameter('kb_teleop')
         self.declare_parameter('use_odom_est')
+        self.declare_parameter('synchronous')
 
         # check num_agents
         num_agents = self.get_parameter('num_agent').value
@@ -99,6 +103,8 @@ class GymBridge(Node):
         ego_odom_topic = self.ego_namespace + '/' + self.get_parameter('ego_odom_topic').value
         self.use_odom_est = self.get_parameter('use_odom_est').value or False
         self.scan_distance_to_base_link = self.get_parameter('scan_distance_to_base_link').value
+        self.synchronous_mode = self.get_parameter('synchronous').value or False
+        self.agent_lap_time = 0
         
         if num_agents == 2:
             self.has_opp = True
@@ -127,9 +133,13 @@ class GymBridge(Node):
             self.ego_scan = list(self.obs['scans'][0])
 
         # sim physical step timer
-        self.drive_timer = self.create_timer(0.01, self.drive_timer_callback)
-        # topic publishing timer
-        self.timer = self.create_timer(0.004, self.timer_callback)
+        if self.synchronous_mode:
+            # timer with time 0 means it will be called as fast as possible
+            self.timer = self.create_timer(0.0, self.timer_callback)
+        else:
+            self.drive_timer = self.create_timer(0.01, self.drive_timer_callback)
+            # topic publishing timer
+            self.timer = self.create_timer(0.004, self.timer_callback)
 
         # transform broadcaster
         self.br = TransformBroadcaster(self)
@@ -137,6 +147,8 @@ class GymBridge(Node):
         # publishers
         self.ego_scan_pub = self.create_publisher(LaserScan, ego_scan_topic, 10)
         self.ego_odom_pub = self.create_publisher(Odometry, ego_odom_topic, 10)
+        self.ego_state_pub = self.create_publisher(Float64MultiArray, self.ego_namespace + '/state', 10)
+        self.agent_lap_time_pub = self.create_publisher(Float64, self.ego_namespace + '/lap_time', 10)
         self.ego_drive_published = False
         if num_agents == 2:
             self.opp_scan_pub = self.create_publisher(LaserScan, opp_scan_topic, 10)
@@ -174,6 +186,16 @@ class GymBridge(Node):
                 '/cmd_vel',
                 self.teleop_callback,
                 10)
+            
+        self.allow_run = True
+        self.allow_run_sub = self.create_subscription(
+            Bool,
+            '/allow_run',
+            self.allow_run_callback,
+            1)
+
+    def allow_run_callback(self, allow_run_msg):
+        self.allow_run = allow_run_msg.data
 
 
     def drive_callback(self, drive_msg):
@@ -215,20 +237,26 @@ class GymBridge(Node):
             self.ego_drive_published = True
 
         self.ego_requested_speed = twist_msg.linear.x
+        self.ego_steer = twist_msg.angular.z
 
-        if twist_msg.angular.z > 0.0:
-            self.ego_steer = 0.3
-        elif twist_msg.angular.z < 0.0:
-            self.ego_steer = -0.3
-        else:
-            self.ego_steer = 0.0
 
     def drive_timer_callback(self):
+        if not self.allow_run:
+            return
         if self.ego_drive_published and not self.has_opp:
             self.obs, _, self.done, _ = self.env.step(np.array([[self.ego_steer, self.ego_requested_speed]]))
         elif self.ego_drive_published and self.has_opp and self.opp_drive_published:
             self.obs, _, self.done, _ = self.env.step(np.array([[self.ego_steer, self.ego_requested_speed], [self.opp_steer, self.opp_requested_speed]]))
         self._update_sim_state()
+        if self.synchronous_mode:
+            self.ego_drive_published = False
+            self.opp_drive_published = False
+
+        if self.obs['lap_times'][0] != self.agent_lap_time and self.obs['lap_counts'][0] <= 0:
+            self.agent_lap_time = self.obs['lap_times'][0]
+            lap_time_msg = Float64()
+            lap_time_msg.data = self.agent_lap_time
+            self.agent_lap_time_pub.publish(lap_time_msg)
 
     def timer_callback(self):
         ts = self.get_clock().now().to_msg()
@@ -262,6 +290,10 @@ class GymBridge(Node):
         self._publish_transforms(ts)
         self._publish_laser_transforms(ts)
         self._publish_wheel_transforms(ts)
+
+        if self.synchronous_mode:
+            # call the drive callback here
+            self.drive_timer_callback()
 
     def _update_sim_state(self):
         self.ego_scan = list(self.obs['scans'][0])
@@ -299,6 +331,12 @@ class GymBridge(Node):
         ego_odom.twist.twist.linear.y = self.ego_speed[1]
         ego_odom.twist.twist.angular.z = self.ego_speed[2]
         self.ego_odom_pub.publish(ego_odom)
+
+        # publish car state
+        # [x, y, yaw, v, steer]
+        ego_state = Float64MultiArray()
+        ego_state.data = [self.ego_pose[0], self.ego_pose[1], self.ego_pose[2], self.ego_speed[0], self.ego_steer]
+        self.ego_state_pub.publish(ego_state)
 
         if self.has_opp:
             opp_odom = Odometry()
@@ -339,6 +377,12 @@ class GymBridge(Node):
             ego_ts.header.frame_id = 'map'
         ego_ts.child_frame_id = self.ego_namespace + '/base_link'
         self.br.sendTransform(ego_ts)
+
+        # if self.use_odom_est:
+        #     # send ground truth transform
+        #     ego_ts.header.frame_id = 'map'
+        #     ego_ts.child_frame_id = self.ego_namespace + '/base_link'
+        #     self.br.sendTransform(ego_ts)
 
         if self.has_opp:
             opp_t = Transform()
