@@ -91,7 +91,8 @@ def generate_launch_description():
         XMLLaunchDescriptionSource(
             os.path.join(get_package_share_directory('rosbridge_server'),
                          'launch', 'rosbridge_websocket_launch.xml')),
-        launch_arguments={'use_compression': 'true'}.items())
+        # launch_arguments={'use_compression': 'true'}.items())
+        launch_arguments={'use_compression': 'false'}.items())
 
     # finalize
     ld.add_action(rviz_node)

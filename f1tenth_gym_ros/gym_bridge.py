@@ -333,9 +333,13 @@ class GymBridge(Node):
         self.ego_odom_pub.publish(ego_odom)
 
         # publish car state
-        # [x, y, yaw, v, steer]
+        # [x, y, steering_angle, speed, yaw, yaw_rate, slip_angle]
         ego_state = Float64MultiArray()
-        ego_state.data = [self.ego_pose[0], self.ego_pose[1], self.ego_pose[2], self.ego_speed[0], self.ego_steer]
+        # yaw rate and slip angle have to be retrieved from the simulator state directly
+        yaw_rate = self.env.sim.agents[0].state[5]
+        slip_angle = self.env.sim.agents[0].state[6]
+        # ego_state.data = [self.ego_pose[0], self.ego_pose[1], self.ego_steer, self.ego_speed[0], self.ego_pose[2], yaw_rate, slip_angle]
+        ego_state.data = list(self.env.sim.agents[0].state)
         self.ego_state_pub.publish(ego_state)
 
         if self.has_opp:
