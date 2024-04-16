@@ -1,0 +1,6 @@
+[submodule "f1tenth_drive/lib/range_libc"]
+	path = f1tenth_drive/lib/range_libc
+	url = https://github.com/RTIS-Lab/range_libc.git
+[submodule "f1tenth_drive/src/kw_f110_drive"]
+	path = f1tenth_drive/src/kw_f110_drive
+	url = https://github.com/RTIS-Lab/kw_f110_drive
