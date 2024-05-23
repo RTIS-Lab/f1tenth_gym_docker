@@ -24,6 +24,10 @@ FROM ros:foxy
 
 SHELL ["/bin/bash", "-c"]
 
+RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=private \
+    --mount=target=/var/cache/apt,type=cache,sharing=private \
+    sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys AD19BAB3CBF125EA
+
 # dependencies
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=private \
@@ -62,7 +66,7 @@ COPY . /sim_ws/src/f1tenth_gym_ros
 RUN rm /sim_ws/src/f1tenth_gym_ros/wait_for_x.bash
 
 RUN source /opt/ros/foxy/setup.bash && \
-    cd sim_ws/ && \
+    cd /sim_ws/ && \
     colcon build
 
 COPY wait_for_x.bash /sim_ws/wait_for_x.bash
