@@ -47,7 +47,7 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=private \
 RUN --mount=type=cache,target=/root/.cache pip3 install transforms3d
 
 # f1tenth gym
-# RUN git clone https://github.com/f1tenth/f1tenth_gym
+RUN git clone https://github.com/f1tenth/f1tenth_gym
 RUN mkdir -p /f1tenth_gym
 COPY f1tenth_gym f1tenth_gym
 RUN --mount=type=cache,target=/root/.cache cd f1tenth_gym && \
