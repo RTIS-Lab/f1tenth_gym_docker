@@ -23,9 +23,8 @@
 version: '3'
 services:
   sim:
-    image: f1tenth_gym_ros
     build: ./f1tenth_gym_ros
-    volumes: 
+    volumes:
       - ./f1tenth_gym_ros:/sim_ws/src/f1tenth_gym_ros
       - /dev/input:/dev/input
     environment:
@@ -36,7 +35,7 @@ services:
       # rosbridge
       - "9090:9090"
     stdin_open: true
-    tty: true 
+    tty: true
     devices:
       - /dev/input/js0:/dev/input/js0
       - /dev/input/js1:/dev/input/js1
@@ -46,31 +45,30 @@ services:
 
 # very heavy, since it has chrome
 # but it's the only vnc container i can find that works
-  # selenoid_vnc:
-  #   image: selenoid/vnc:chrome_91.0
-  #   container_name: selenoid_vnc
-  #   ports:
-  #     - "4444:4444"
-  #     - "5900:5900"
-  #   environment:
-  #     - ENABLE_VNC=true
-  #   cap_add:
-  #     - SYS_ADMIN
-  #   restart: "no"
-  #   networks:
-  #     - x11
+  selenoid_vnc:
+    image: selenoid/vnc:chrome_91.0
+    container_name: selenoid_vnc
+    ports:
+      - "4444:4444"
+      - "5900:5900"
+    environment:
+      - ENABLE_VNC=true
+    cap_add:
+      - SYS_ADMIN
+    restart: "no"
+    networks:
+      - x11
 
   driver:
-    image: f1tenth_drive
     build: ./f1tenth_drive
-    volumes: 
+    volumes:
       - ./f1tenth_drive/src:/f1tenth_drive/src
     environment:
       - DISPLAY=selenoid_vnc:99.0
     networks:
       - x11
     stdin_open: true
-    tty: true 
+    tty: true
 
 
 networks:

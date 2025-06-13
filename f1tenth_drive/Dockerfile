@@ -16,6 +16,7 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=private \
                        ros-foxy-rviz2 \
                        ros-foxy-tf-transformations \
                        coinor-libipopt-dev \
+                       libboost-all-dev \
                        cppad
 
 # valgrind
@@ -26,7 +27,7 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=private \
     apt-get install -y valgrind
 
 RUN apt-get -y dist-upgrade
-RUN --mount=type=cache,target=/root/.cache pip3 install transforms3d cython
+RUN --mount=type=cache,target=/root/.cache pip3 install transforms3d cython==0.29.37
 
 RUN mkdir -p /f1tenth_drive/src/kw_f110_drive/
 RUN mkdir -p /f1tenth_drive/src/kw_f110_drive/kw_f110_msgs/
@@ -61,4 +62,3 @@ RUN echo "source /opt/ros/foxy/setup.bash" >> ~/.bashrc
 RUN echo "source /f1tenth_drive/install/setup.bash" >> ~/.bashrc
 
 ENTRYPOINT ["bash", "-c", "source /f1tenth_drive/install/setup.bash && ros2 run kw_f110_drive teleop"]
-
