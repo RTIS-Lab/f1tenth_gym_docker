@@ -5,5 +5,5 @@
 	path = f1tenth_drive/src/kw_f110_drive
 	url = https://github.com/RTIS-Lab/kw_f110_drive
 [submodule "f1tenth_gym_ros/maps/f1tenth_racetracks"]
-	path = f1tenth_gym_ros/maps/f1tenth_racetracks
+	path = f1tenth_gym_ros/f1tenth_gym_ros/maps/f1tenth_racetracks
 	url = https://github.com/f1tenth/f1tenth_racetracks.git
