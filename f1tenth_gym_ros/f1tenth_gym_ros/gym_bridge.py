@@ -135,7 +135,7 @@ class GymBridge(Node):
         # sim physical step timer
         if self.synchronous_mode:
             # timer with time 0 means it will be called as fast as possible
-            self.timer = self.create_timer(0.0, self.timer_callback)
+            self.timer = self.create_timer(0.025, self.timer_callback)
         else:
             self.drive_timer = self.create_timer(0.01, self.drive_timer_callback)
             # topic publishing timer
