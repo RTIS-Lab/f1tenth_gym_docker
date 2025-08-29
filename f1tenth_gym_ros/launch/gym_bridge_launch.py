@@ -102,7 +102,7 @@ def generate_launch_description():
     ld.add_action(ego_robot_publisher)
     if has_opp:
         ld.add_action(opp_robot_publisher)
-    ld.add_action(bridge_launch)
+    # ld.add_action(bridge_launch)
     # if teleop:
         # joystick teleop
         # ld.add_action(Node(
