@@ -40,6 +40,10 @@ from std_msgs.msg import Bool
 import gym
 import numpy as np
 from transforms3d import euler
+from tf2_ros import Buffer, TransformListener, TransformException
+import tf2_geometry_msgs
+from rclpy.time import Time
+from rclpy.duration import Duration
 
 class GymBridge(Node):
     def __init__(self):
@@ -105,7 +109,7 @@ class GymBridge(Node):
         self.scan_distance_to_base_link = self.get_parameter('scan_distance_to_base_link').value
         self.synchronous_mode = self.get_parameter('synchronous').value or False
         self.agent_lap_time = 0
-        
+
         if num_agents == 2:
             self.has_opp = True
             self.opp_namespace = self.get_parameter('opp_namespace').value
@@ -143,6 +147,10 @@ class GymBridge(Node):
 
         # transform broadcaster
         self.br = TransformBroadcaster(self)
+
+        # transform listener
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
 
         # publishers
         self.ego_scan_pub = self.create_publisher(LaserScan, ego_scan_topic, 10)
@@ -186,7 +194,7 @@ class GymBridge(Node):
                 '/cmd_vel',
                 self.teleop_callback,
                 10)
-            
+
         self.allow_run = True
         self.allow_run_sub = self.create_subscription(
             Bool,
@@ -208,14 +216,78 @@ class GymBridge(Node):
         self.opp_steer = drive_msg.drive.steering_angle
         self.opp_drive_published = True
 
+    def _transform_pose_to_map(self, pose_msg:PoseStamped, is_covariance_pose=True):
+        """
+        Transform a pose to the map frame
+
+        Args:
+            pose_msg: The pose message to transform
+            is_covariance_pose: Whether the pose is a PoseWithCovarianceStamped (True) or PoseStamped (False)
+
+        Returns:
+            Tuple of (x, y, qx, qy, qz, qw) or None if transformation failed
+        """
+        target_frame = 'map'
+        from_frame = pose_msg.header.frame_id
+
+        if from_frame == target_frame:
+            # Already in the right frame, just extract the pose
+            if is_covariance_pose:
+                position = pose_msg.pose.pose.position
+                orientation = pose_msg.pose.pose.orientation
+            else:
+                position = pose_msg.pose.position
+                orientation = pose_msg.pose.orientation
+
+            return (position.x, position.y,
+                    orientation.x, orientation.y,
+                    orientation.z, orientation.w)
+
+        # Need to transform
+        try:
+            # Look up the transform from source frame to target frame
+            when = Time()
+            trans = self.tf_buffer.lookup_transform(
+                target_frame,
+                from_frame,
+                when,
+                Duration(seconds=1.0))
+
+            # Create pose for transformation
+            pose_stamped = PoseStamped()
+            pose_stamped.header = pose_msg.header
+
+            if is_covariance_pose:
+                pose_stamped.pose = pose_msg.pose.pose
+            else:
+                pose_stamped.pose = pose_msg.pose
+
+            # Transform the pose
+            transformed_pose = tf2_geometry_msgs.do_transform_pose(pose_stamped.pose, trans)
+
+            # Extract the transformed pose components
+            rx = transformed_pose.position.x
+            ry = transformed_pose.position.y
+            rqx = transformed_pose.orientation.x
+            rqy = transformed_pose.orientation.y
+            rqz = transformed_pose.orientation.z
+            rqw = transformed_pose.orientation.w
+
+            self.get_logger().info(f'Transformed pose from {from_frame} to {target_frame}')
+            return (rx, ry, rqx, rqy, rqz, rqw)
+
+        except TransformException as ex:
+            self.get_logger().error(f'Could not transform {from_frame} to {target_frame}: {ex}')
+            return None
+
     def ego_reset_callback(self, pose_msg):
-        rx = pose_msg.pose.pose.position.x
-        ry = pose_msg.pose.pose.position.y
-        rqx = pose_msg.pose.pose.orientation.x
-        rqy = pose_msg.pose.pose.orientation.y
-        rqz = pose_msg.pose.pose.orientation.z
-        rqw = pose_msg.pose.pose.orientation.w
+        pose_components = self._transform_pose_to_map(pose_msg, is_covariance_pose=True)
+        if pose_components is None:
+            return
+
+        rx, ry, rqx, rqy, rqz, rqw = pose_components
         _, _, rtheta = euler.quat2euler([rqw, rqx, rqy, rqz], axes='sxyz')
+
         if self.has_opp:
             opp_pose = [self.obs['poses_x'][1], self.obs['poses_y'][1], self.obs['poses_theta'][1]]
             self.obs, _ , self.done, _ = self.env.reset(np.array([[rx, ry, rtheta], opp_pose]))
@@ -224,12 +296,11 @@ class GymBridge(Node):
 
     def opp_reset_callback(self, pose_msg):
         if self.has_opp:
-            rx = pose_msg.pose.position.x
-            ry = pose_msg.pose.position.y
-            rqx = pose_msg.pose.orientation.x
-            rqy = pose_msg.pose.orientation.y
-            rqz = pose_msg.pose.orientation.z
-            rqw = pose_msg.pose.orientation.w
+            pose_components = self._transform_pose_to_map(pose_msg, is_covariance_pose=False)
+            if pose_components is None:
+                return
+
+            rx, ry, rqx, rqy, rqz, rqw = pose_components
             _, _, rtheta = euler.quat2euler([rqw, rqx, rqy, rqz], axes='sxyz')
             self.obs, _ , self.done, _ = self.env.reset(np.array([list(self.ego_pose), [rx, ry, rtheta]]))
     def teleop_callback(self, twist_msg):
@@ -313,7 +384,7 @@ class GymBridge(Node):
         self.ego_speed[1] = self.obs['linear_vels_y'][0]
         self.ego_speed[2] = self.obs['ang_vels_z'][0]
 
-        
+
 
     def _publish_odom(self, ts):
         ego_odom = Odometry()
