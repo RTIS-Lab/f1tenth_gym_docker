@@ -18,4 +18,4 @@
 	url = https://github.com/RTIS-Lab/rtis_f110_rl.git
 [submodule "f1tenth_system/src/f1tenth_system"]
 	path = f1tenth_system/src/f1tenth_system
-	url = https://github.com/f1tenth/f1tenth_system.git
+	url = https://github.com/RTIS-Lab/f1tenth_system.git
