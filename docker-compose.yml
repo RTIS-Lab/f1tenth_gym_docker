@@ -21,36 +21,38 @@
 # SOFTWARE.
 
 services:
-  sim:
-    build: ./f1tenth_gym_ros
-    volumes:
-      - ./f1tenth_gym_ros:/sim_ws/src/f1tenth_gym_ros
-      - /dev/input:/dev/input:ro
-      # Bind the X11 socket from the host
-      - /tmp/.X11-unix:/tmp/.X11-unix
-      - ${XDG_RUNTIME_DIR}/pipewire-0:/tmp/pipewire-0
-    environment:
-      # Tell apps inside the container where to find the X11 display
-      - XDG_RUNTIME_DIR=/tmp
-      - DISPLAY=${DISPLAY}
-      # use software rendering to avoid GPU issues
-      - LIBGL_ALWAYS_SOFTWARE=1
-    stdin_open: true
-    tty: true
-    privileged: true
+  base:
+    build:
+      context: .
+      dockerfile: base.Dockerfile
+    image: f1tenth-base
+    profiles:
+      - setup
 
+  discovery:
+    image: f1tenth-base
+    command: fastdds discovery --server-id 0
+    network_mode: host
+    ipc: host
+    pid: host
 
   # for X11 forwarding, run `xhost local:docker` on the host first
-  driver:
-    build: ./f1tenth_drive
+  drive:
+    build:
+      context: ./f1tenth_drive
+      args:
+        - BASE_IMAGE_TAG=${BASE_IMAGE_TAG:-latest}
+    image: f1tenth-drive:${BASE_IMAGE_TAG:-latest}
+    depends_on:
+      - discovery
     volumes:
-        - ./f1tenth_drive/src:/f1tenth_drive/src
-        - ./f1tenth_drive/results:/f1tenth_drive/results
-        - ./f1tenth_gym_ros:/f1tenth_gym_ros
+        - ./f1tenth_drive:/ros_ws
+        - ./f1tenth_system:/f1tenth_system
         # Bind the X11 socket from the host
         - /tmp/.X11-unix:/tmp/.X11-unix
         - ${XDG_RUNTIME_DIR}/pipewire-0:/tmp/pipewire-0
         - /sys/fs/cgroup:/sys/fs/cgroup:rw
+        - ./fastdds.xml:/etc/fastdds.xml
     environment:
         # Tell apps inside the container where to find the X11 display
         - XDG_RUNTIME_DIR=/tmp
@@ -58,10 +60,44 @@ services:
         # Force Intel GPU usage
         - LIBGL_ALWAYS_INDIRECT=0
         - DRI_PRIME=0
-    ports:
-     - "2222:22"  # Map container's SSH port to host port 2222
-    stdin_open: true
-    tty: true
+        - ROS_DISCOVERY_SERVER=localhost:11811
+    # ports:
+    #  - "2222:22"  # Map container's SSH port to host port 2222
+    # stdin_open: true
+    # tty: true
     privileged: true
     pid: host
     cgroup: "host"
+    network_mode: host
+    ipc: host
+
+  system:
+    build:
+      context: ./f1tenth_system
+      args:
+        - BASE_IMAGE_TAG=${BASE_IMAGE_TAG:-latest}
+    image: f1tenth-system:${BASE_IMAGE_TAG:-latest}
+    depends_on:
+      - discovery
+    volumes:
+      - ./f1tenth_system:/ros_ws
+      - /dev/input:/dev/input:rw
+      - /dev/sensors:/dev/sensors:rw
+      # Bind the X11 socket from the host
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ${XDG_RUNTIME_DIR}/pipewire-0:/tmp/pipewire-0
+      - ./fastdds.xml:/etc/fastdds.xml
+    environment:
+      # Tell apps inside the container where to find the X11 display
+      - XDG_RUNTIME_DIR=/tmp
+      - DISPLAY=${DISPLAY}
+      # use software rendering to avoid GPU issues
+      - LIBGL_ALWAYS_SOFTWARE=1
+      - ROS_DISCOVERY_SERVER=localhost:11811
+    devices:
+      - /dev/input:/dev/input:rwm
+    # stdin_open: true
+    # tty: true
+    privileged: true
+    network_mode: host
+    ipc: host

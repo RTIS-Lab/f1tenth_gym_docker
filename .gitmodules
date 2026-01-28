@@ -4,12 +4,6 @@
 [submodule "f1tenth_drive/src/kw_f110_drive"]
 	path = f1tenth_drive/src/kw_f110_drive
 	url = https://github.com/RTIS-Lab/kw_f110_drive
-[submodule "f1tenth_gym_ros/maps/f1tenth_racetracks"]
-	path = f1tenth_gym_ros/maps/f1tenth_racetracks
-	url = https://github.com/f1tenth/f1tenth_racetracks/
-[submodule "f1tenth_gym_ros/f1tenth_gym"]
-	path = "f1tenth_gym_ros/f1tenth_gym"
-	url = https://github.com/RTIS-Lab/f1tenth_gym
 [submodule "f1tenth_drive/lib/nlopt"]
 	path = f1tenth_drive/lib/nlopt
 	url = https://github.com/stevengj/nlopt
@@ -22,3 +16,6 @@
 [submodule "f1tenth_drive/src/rtis_f110_rl"]
 	path = f1tenth_drive/src/rtis_f110_rl
 	url = https://github.com/RTIS-Lab/rtis_f110_rl.git
+[submodule "f1tenth_system/src/f1tenth_system"]
+	path = f1tenth_system/src/f1tenth_system
+	url = https://github.com/f1tenth/f1tenth_system.git
