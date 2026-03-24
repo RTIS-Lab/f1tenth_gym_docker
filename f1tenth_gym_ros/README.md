@@ -16,7 +16,7 @@ This installation guide will be split into instruction for installing the ROS 2 
 
 **Install the following dependencies:**
 
-- **ROS 2** Follow the instructions [here](https://docs.ros.org/en/foxy/Installation.html) to install ROS 2 Foxy.
+- **ROS 2** Follow the instructions [here](https://docs.ros.org/en/humble/Installation.html) to install ROS 2 humble.
 - **F1TENTH Gym**
 
   ```bash
@@ -37,9 +37,9 @@ This installation guide will be split into instruction for installing the ROS 2 
 - Install dependencies with rosdep:
 
   ```bash
-  source /opt/ros/foxy/setup.bash
+  source /opt/ros/humble/setup.bash
   cd ..
-  rosdep install -i --from-path src --rosdistro foxy -y
+  rosdep install -i --from-path src --rosdistro humble -y
   ```
 - Build the workspace: `colcon build`
 
@@ -99,7 +99,7 @@ docker exec -it f1tenth_gym_ros-sim-1 /bin/bash
 2. To launch the simulation, make sure you source both the ROS2 setup script and the local workspace setup script. Run the following in the bash session from the container:
 
 ```bash
-$ source /opt/ros/foxy/setup.bash
+$ source /opt/ros/humble/setup.bash
 $ source install/local_setup.bash
 $ ros2 launch f1tenth_gym_ros gym_bridge_launch.py
 ```

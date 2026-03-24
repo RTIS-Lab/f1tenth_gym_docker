@@ -116,7 +116,7 @@ def generate_launch_description():
         package='joy',
         executable='joy_node',
         name='joy_node',
-        parameters=[{'dev': js_device}],
+        parameters=[{'dev': js_device, 'coalesce_interval_ms': 10}],
     ))
 
 

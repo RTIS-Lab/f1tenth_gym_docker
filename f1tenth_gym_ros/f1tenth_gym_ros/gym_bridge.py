@@ -37,7 +37,8 @@ from tf2_ros import TransformBroadcaster
 from std_msgs.msg import Float64MultiArray, Float64
 from std_msgs.msg import Bool
 
-import gym
+# import gymnasium as gym
+from f110_gym.envs import F110Env
 import numpy as np
 from transforms3d import euler
 from tf2_ros import Buffer, TransformListener, TransformException
@@ -49,31 +50,31 @@ class GymBridge(Node):
     def __init__(self):
         super().__init__('gym_bridge')
 
-        self.declare_parameter('ego_namespace')
-        self.declare_parameter('ego_odom_topic')
-        self.declare_parameter('ego_opp_odom_topic')
-        self.declare_parameter('ego_scan_topic')
-        self.declare_parameter('ego_drive_topic')
-        self.declare_parameter('opp_namespace')
-        self.declare_parameter('opp_odom_topic')
-        self.declare_parameter('opp_ego_odom_topic')
-        self.declare_parameter('opp_scan_topic')
-        self.declare_parameter('opp_drive_topic')
-        self.declare_parameter('scan_distance_to_base_link')
-        self.declare_parameter('scan_fov')
-        self.declare_parameter('scan_beams')
-        self.declare_parameter('map_path')
-        self.declare_parameter('map_img_ext')
-        self.declare_parameter('num_agent')
-        self.declare_parameter('sx')
-        self.declare_parameter('sy')
-        self.declare_parameter('stheta')
-        self.declare_parameter('sx1')
-        self.declare_parameter('sy1')
-        self.declare_parameter('stheta1')
-        self.declare_parameter('kb_teleop')
-        self.declare_parameter('use_odom_est')
-        self.declare_parameter('synchronous')
+        self.declare_parameter('ego_namespace', "")
+        self.declare_parameter('ego_odom_topic', "")
+        self.declare_parameter('ego_opp_odom_topic', "")
+        self.declare_parameter('ego_scan_topic', "")
+        self.declare_parameter('ego_drive_topic', "")
+        self.declare_parameter('opp_namespace', "")
+        self.declare_parameter('opp_odom_topic', "")
+        self.declare_parameter('opp_ego_odom_topic', "")
+        self.declare_parameter('opp_scan_topic', "")
+        self.declare_parameter('opp_drive_topic', "")
+        self.declare_parameter('scan_distance_to_base_link', 0.0)
+        self.declare_parameter('scan_fov', 0.0)
+        self.declare_parameter('scan_beams', 0)
+        self.declare_parameter('map_path', "")
+        self.declare_parameter('map_img_ext', "")
+        self.declare_parameter('num_agent', 1)
+        self.declare_parameter('sx', 0.0)
+        self.declare_parameter('sy', 0.0)
+        self.declare_parameter('stheta', 0.0)
+        self.declare_parameter('sx1', 0.0)
+        self.declare_parameter('sy1', 0.0)
+        self.declare_parameter('stheta1', 0.0)
+        self.declare_parameter('kb_teleop', True)
+        self.declare_parameter('use_odom_est', False)
+        self.declare_parameter('synchronous', False)
 
         # check num_agents
         num_agents = self.get_parameter('num_agent').value
@@ -83,7 +84,7 @@ class GymBridge(Node):
             raise ValueError('num_agents should be an int.')
 
         # env backend
-        self.env = gym.make('f110_gym:f110-v0',
+        self.env = F110Env(
                             map=self.get_parameter('map_path').value,
                             map_ext=self.get_parameter('map_img_ext').value,
                             num_agents=num_agents)
@@ -121,7 +122,7 @@ class GymBridge(Node):
             self.opp_requested_speed = 0.0
             self.opp_steer = 0.0
             self.opp_collision = False
-            self.obs, _ , self.done, _ = self.env.reset(np.array([[sx, sy, stheta], [sx1, sy1, stheta1]]))
+            self.obs, _ , self.done, _ = self.env.reset(options={"poses": np.array([[sx, sy, stheta], [sx1, sy1, stheta1]])})
             self.ego_scan = list(self.obs['scans'][0])
             self.opp_scan = list(self.obs['scans'][1])
 
@@ -133,17 +134,16 @@ class GymBridge(Node):
             opp_ego_odom_topic = self.opp_namespace + '/' + self.get_parameter('opp_ego_odom_topic').value
         else:
             self.has_opp = False
-            self.obs, _ , self.done, _ = self.env.reset(np.array([[sx, sy, stheta]]))
+            self.obs, _ , self.done, _ = self.env.reset(options={"poses":np.array([[sx, sy, stheta]])})
             self.ego_scan = list(self.obs['scans'][0])
 
         # sim physical step timer
         if self.synchronous_mode:
-            # timer with time 0 means it will be called as fast as possible
             self.timer = self.create_timer(0.025, self.timer_callback)
         else:
             self.drive_timer = self.create_timer(0.01, self.drive_timer_callback)
             # topic publishing timer
-            self.timer = self.create_timer(0.004, self.timer_callback)
+            self.timer = self.create_timer(0.025, self.timer_callback)
 
         # transform broadcaster
         self.br = TransformBroadcaster(self)
@@ -290,9 +290,9 @@ class GymBridge(Node):
 
         if self.has_opp:
             opp_pose = [self.obs['poses_x'][1], self.obs['poses_y'][1], self.obs['poses_theta'][1]]
-            self.obs, _ , self.done, _ = self.env.reset(np.array([[rx, ry, rtheta], opp_pose]))
+            self.obs, _ , self.done, _ = self.env.reset(options={"poses": np.array([[rx, ry, rtheta], opp_pose])})
         else:
-            self.obs, _ , self.done, _ = self.env.reset(np.array([[rx, ry, rtheta]]))
+            self.obs, _ , self.done, _ = self.env.reset(options={"poses":np.array([[rx, ry, rtheta]])})
 
     def opp_reset_callback(self, pose_msg):
         if self.has_opp:
@@ -302,7 +302,7 @@ class GymBridge(Node):
 
             rx, ry, rqx, rqy, rqz, rqw = pose_components
             _, _, rtheta = euler.quat2euler([rqw, rqx, rqy, rqz], axes='sxyz')
-            self.obs, _ , self.done, _ = self.env.reset(np.array([list(self.ego_pose), [rx, ry, rtheta]]))
+            self.obs, _ , self.done, _ = self.env.reset(options={"poses":np.array([list(self.ego_pose), [rx, ry, rtheta]])})
     def teleop_callback(self, twist_msg):
         if not self.ego_drive_published:
             self.ego_drive_published = True
@@ -315,6 +315,10 @@ class GymBridge(Node):
         if not self.allow_run:
             return
         if self.ego_drive_published and not self.has_opp:
+            if np.isnan(self.ego_requested_speed):
+                self.ego_requested_speed = 0.0
+            if np.isnan(self.ego_steer):
+                self.ego_steer = 0.0
             self.obs, _, self.done, _ = self.env.step(np.array([[self.ego_steer, self.ego_requested_speed]]))
         elif self.ego_drive_published and self.has_opp and self.opp_drive_published:
             self.obs, _, self.done, _ = self.env.step(np.array([[self.ego_steer, self.ego_requested_speed], [self.opp_steer, self.opp_requested_speed]]))

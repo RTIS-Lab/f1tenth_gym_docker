@@ -20,13 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-version: '3'
 services:
   sim:
     build: ./f1tenth_gym_ros
     volumes:
       - ./f1tenth_gym_ros:/sim_ws/src/f1tenth_gym_ros
-      - /dev/input:/dev/input
+      - /dev/input:/dev/input:ro
       # Bind the X11 socket from the host
       - /tmp/.X11-unix:/tmp/.X11-unix
       - ${XDG_RUNTIME_DIR}/pipewire-0:/tmp/pipewire-0
@@ -34,39 +33,35 @@ services:
       # Tell apps inside the container where to find the X11 display
       - XDG_RUNTIME_DIR=/tmp
       - DISPLAY=${DISPLAY}
-    devices:
-      # Mount Intel GPU and sound devices
-      # - /dev/dri/card1:/dev/dri/card1
-      # - /dev/dri/renderD129:/dev/dri/renderD129
-      - /dev/snd
-      - /dev/input/js0:/dev/input/js0
-      - /dev/input/js1:/dev/input/js1
+      # use software rendering to avoid GPU issues
+      - LIBGL_ALWAYS_SOFTWARE=1
     stdin_open: true
     tty: true
     privileged: true
-    # group_add:
-    #     - 985  # video
+    shm_size: 2g
 
 
+  # for X11 forwarding, run `xhost local:docker` on the host first
   driver:
     build: ./f1tenth_drive
     volumes:
-      - ./f1tenth_drive/src:/f1tenth_drive/src
-      # Bind the X11 socket from the host
-      - /tmp/.X11-unix:/tmp/.X11-unix
-      - ${XDG_RUNTIME_DIR}/pipewire-0:/tmp/pipewire-0
+        - ./f1tenth_drive/src:/f1tenth_drive/src
+        - ./f1tenth_drive/results:/f1tenth_drive/results
+        - ./f1tenth_gym_ros:/f1tenth_gym_ros
+        # Bind the X11 socket from the host
+        - /tmp/.X11-unix:/tmp/.X11-unix
+        - ${XDG_RUNTIME_DIR}/pipewire-0:/tmp/pipewire-0
+        - /sys/fs/cgroup:/sys/fs/cgroup:rw
     environment:
-      # Tell apps inside the container where to find the X11 display
-      - XDG_RUNTIME_DIR=/tmp
-      - DISPLAY=${DISPLAY}
-      # Force Intel GPU usage
-      - LIBGL_ALWAYS_INDIRECT=0
-      - DRI_PRIME=0
-      - MESA_LOADER_DRIVER_OVERRIDE=iris
-    devices:
-      # Mount Intel GPU and sound devices
-      - /dev/dri/card0:/dev/dri/card0
-      - /dev/dri/renderD128:/dev/dri/renderD128
-      - /dev/snd
+        # Tell apps inside the container where to find the X11 display
+        - XDG_RUNTIME_DIR=/tmp
+        - DISPLAY=${DISPLAY}
+        - GITHUB_TOKEN=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
+    ports:
+     - "2222:22"  # Map container's SSH port to host port 2222
     stdin_open: true
     tty: true
+    privileged: true
+    pid: host
+    cgroup: "host"
+    shm_size: 2g
