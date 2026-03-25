@@ -47,7 +47,8 @@ services:
     volumes:
         - ./f1tenth_drive/src:/f1tenth_drive/src
         - ./f1tenth_drive/results:/f1tenth_drive/results
-        - ./f1tenth_gym_ros:/f1tenth_gym_ros
+        # add the simulator, if you need files like maps or configs
+        - ./f1tenth_gym_ros:/f1tenth_gym_ros:ro
         # Bind the X11 socket from the host
         - /tmp/.X11-unix:/tmp/.X11-unix
         - ${XDG_RUNTIME_DIR}/pipewire-0:/tmp/pipewire-0
@@ -56,7 +57,6 @@ services:
         # Tell apps inside the container where to find the X11 display
         - XDG_RUNTIME_DIR=/tmp
         - DISPLAY=${DISPLAY}
-        - GITHUB_TOKEN=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
     ports:
      - "2222:22"  # Map container's SSH port to host port 2222
     stdin_open: true

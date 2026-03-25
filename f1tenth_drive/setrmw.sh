@@ -1,0 +1,3 @@
+export COLCON_EXTENSION_BLOCKLIST=colcon_core.event_handler.desktop_notification
+export FASTRTPS_DEFAULT_PROFILES_FILE=/f1tenth_drive/fastrtps.xml
+export RMW_FASTRTPS_USE_QOS_FROM_XML=1

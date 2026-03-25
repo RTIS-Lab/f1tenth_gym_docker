@@ -1,0 +1,3 @@
+export COLCON_EXTENSION_BLOCKLIST=colcon_core.event_handler.desktop_notification
+export FASTRTPS_DEFAULT_PROFILES_FILE=/sim_ws/src/f1tenth_gym_ros/fastrtps.xml
+export RMW_FASTRTPS_USE_QOS_FROM_XML=1
