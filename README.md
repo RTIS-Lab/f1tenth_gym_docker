@@ -1,6 +1,9 @@
 # FastSimplex development and evaluation repo
 The structure of this repo is based off of https://github.com/RTIS-Lab/f1tenth_gym_docker. Uses ROS2 Humble
 
+Extra assets are at https://nextcloud.kurtw.dev/s/nJAGi3GRtenoi4W
+Put `extra_libs.zip` into `f1tenth_drive/lib`, and `extra_maps.zip` into `f1tenth_gym_ros/maps`
+
 ## Running
 in short:
 * docker compose up
