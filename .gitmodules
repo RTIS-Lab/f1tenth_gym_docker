@@ -10,3 +10,12 @@
 [submodule "f1tenth_gym_ros/f1tenth_gym"]
 	path = f1tenth_gym_ros/f1tenth_gy
 	url = https://github.com/RTIS-lab/f1tenth_gym
+[submodule "f1tenth_drive/src/ros_preempt"]
+	path = f1tenth_drive/src/ros_preempt
+	url = https://github.com/RTIS-Lab/ros_preempt.git
+[submodule "f1tenth_drive/src/rtis_f110_rl"]
+	path = f1tenth_drive/src/rtis_f110_rl
+	url = https://github.com/RTIS-Lab/f1tenth_gym_docker.git
+[submodule "f1tenth_drive/src/rtis_safety"]
+	path = f1tenth_drive/src/rtis_safety
+	url = https://github.com/RTIS-Lab/rtis_safety.git
