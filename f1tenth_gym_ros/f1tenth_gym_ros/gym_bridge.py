@@ -143,7 +143,7 @@ class GymBridge(Node):
         else:
             self.drive_timer = self.create_timer(0.01, self.drive_timer_callback)
             # topic publishing timer
-            self.timer = self.create_timer(0.025, self.timer_callback)
+            self.timer = self.create_timer(0.01, self.timer_callback)
 
         # transform broadcaster
         self.br = TransformBroadcaster(self)
