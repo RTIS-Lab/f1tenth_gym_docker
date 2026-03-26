@@ -8,7 +8,7 @@
 	path = f1tenth_gym_ros/maps/f1tenth_racetracks
 	url = https://github.com/f1tenth/f1tenth_racetracks/
 [submodule "f1tenth_gym_ros/f1tenth_gym"]
-	path = f1tenth_gym_ros/f1tenth_gy
+	path = f1tenth_gym_ros/f1tenth_gym
 	url = https://github.com/RTIS-lab/f1tenth_gym
 [submodule "f1tenth_drive/src/ros_preempt"]
 	path = f1tenth_drive/src/ros_preempt
