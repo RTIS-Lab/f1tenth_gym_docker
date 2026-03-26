@@ -104,6 +104,7 @@ WORKDIR '/f1tenth_drive'
 RUN echo "export PATH=/opt/venv/bin:$PATH" >> ~/.bashrc
 RUN echo "export VIRTUAL_ENV=/opt/venv" >> ~/.bashrc
 RUN echo "export RCUTILS_COLORIZED_OUTPUT=1"  >> ~/.bashrc
+RUN echo "cd /f1tenth_drive" >> ~/.bashrc
 
 RUN echo "export LD_LIBRARY_PATH=\"/f1tenth_drive/lib/libtorch/lib/\"" >> ~/.bashrc
 

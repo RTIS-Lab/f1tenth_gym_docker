@@ -22,6 +22,14 @@ You may not need to restart the system to apply changes - if you're working in `
 ## FastSimplex
 The FastSimplex algorithm is implemented in `f1tenth_drive/src/rtis_safety`, and uses the scheduler in `f1tenth_drive/src/rtis_preempt`.
 
+### cgroup setup
+In the docker container, run `f1tenth_drive/src/rtis_safety/setup_cpuset.bash`. This will create a cgroup called `deadline_group` with two cpu cores assigned. To ensure any further commands run in that cgroup, run `echo $$ > /sys/fs/cgroup/deadline_group/cgroup.procs`. 
+> You can also do `source f1tenth_drive/src/rtis_safety/setup_cpuset.bash`, which will add the current shell to the cgroup
+
+This only applies to the current shell - re-run it in any new shells you open. It will also prevent any other task from being run on the two assigned cpu cores. The cgroup will persist until you reboot the host or manually delete it - to remove it, run `f1tenth_drive/src/rtis_safety/remove_cpuset.bash`.
+
+### Running
+
 To start the FastSimplex system, run `ros2 launch rtis_safety safety_system.launch.py` in the driver container. Stop it with <kbd>Ctrl+C</kbd>.
 
 ### Analyzing a run

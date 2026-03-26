@@ -33,8 +33,6 @@ services:
       # Tell apps inside the container where to find the X11 display
       - XDG_RUNTIME_DIR=/tmp
       - DISPLAY=${DISPLAY}
-      # use software rendering to avoid GPU issues
-      - LIBGL_ALWAYS_SOFTWARE=1
     stdin_open: true
     tty: true
     privileged: true
