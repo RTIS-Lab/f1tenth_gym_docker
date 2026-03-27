@@ -40,7 +40,7 @@ bridge:
     scan_distance_to_base_link: 0.0
 
     # laserscan parameters
-    scan_fov: 4.7
+    scan_fov: 4.712389
     scan_beams: 1080
 
     # map parameters
@@ -50,11 +50,6 @@ bridge:
 
     # opponent parameters
     num_agent: 1
-
-    # ego starting pose on map
-    sx: 0.0
-    sy: 0.0
-    stheta: -0.6666543
 
     # opp starting pose on map
     sx1: 2.0
@@ -66,3 +61,8 @@ bridge:
     js_device: '/dev/input/js0'
 
     synchronous: False
+
+    # Stuck car respawn (ego only)
+    enable_stuck_respawn: True
+    stuck_velocity_threshold: 0.1
+    stuck_time_threshold: 3.0
