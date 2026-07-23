@@ -71,6 +71,37 @@ services:
     network_mode: host
     ipc: host
 
+  sim:
+    build:
+      context: .
+      dockerfile: sim.Dockerfile
+      args:
+        - BASE_IMAGE_TAG=${BASE_IMAGE_TAG:-latest}
+    image: f1tenth-sim:${BASE_IMAGE_TAG:-latest}
+    depends_on:
+      - discovery
+    volumes:
+      - ./f1tenth_gym_ros:/sim_ws/src/f1tenth_gym_ros
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ${XDG_RUNTIME_DIR}/pipewire-0:/tmp/pipewire-0
+      - ./fastdds.xml:/etc/fastdds.xml
+    environment:
+      - XDG_RUNTIME_DIR=/tmp
+      - DISPLAY=${DISPLAY}
+      - LIBGL_ALWAYS_SOFTWARE=1
+      - ROS_DISCOVERY_SERVER=localhost:11811
+      # set SIM_HEADLESS=1 to skip rviz (used by eval scripts)
+      - SIM_HEADLESS=${SIM_HEADLESS:-0}
+      # set VNC_ENABLED=1 to view rviz via VNC instead of X11 forwarding
+      # (self-contained virtual display; no SSH X11Forwarding needed).
+      # Tunnel with `ssh -L 5901:localhost:5901 <host>`, then connect a VNC
+      # viewer to localhost:5901 with the password printed in `docker compose
+      # logs sim` (or set VNC_PASSWORD yourself).
+      - VNC_ENABLED=${VNC_ENABLED:-0}
+      - VNC_PASSWORD=${VNC_PASSWORD:-}
+    network_mode: host
+    ipc: host
+
   system:
     build:
       context: ./f1tenth_system

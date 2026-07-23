@@ -45,13 +45,20 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=private \
     --mount=target=/var/cache/apt,type=cache,sharing=private \
     apt-get update && \
     source /opt/ros/humble/setup.bash && \
-    rosdep install -i --from-path src --rosdistro humble -y --skip-keys nlopt
+    rosdep install -i --from-path src --rosdistro humble -y --skip-keys "nlopt casestudy_tools"
 
 # Copy application code
 COPY . .
 
 # Python dependencies
-RUN --mount=type=cache,target=/root/.cache uv pip install transforms3d cython==0.29.37 numba torch
+# x86_64 sim machines have no CUDA toolkit: the default (CUDA) torch wheel's
+# C++ CMake config fails to configure rl_driver, so install the CPU wheel
+RUN --mount=type=cache,target=/root/.cache uv pip install transforms3d cython==0.29.37 numba && \
+    if [ "$(uname -m)" = "x86_64" ]; then \
+        uv pip install torch --index-url https://download.pytorch.org/whl/cpu ; \
+    else \
+        uv pip install torch ; \
+    fi
 
 # range_libc
 RUN cd /ros_ws/lib/range_libc/pywrapper && \
