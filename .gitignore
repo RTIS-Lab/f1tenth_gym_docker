@@ -22,3 +22,9 @@ __pycache__/
 
 # Docker
 .dockerignore
+
+# Eval run results/output (not source; classic_simplex_bounds.csv is
+# tracked separately as it's a reusable input, not a run result)
+/f1tenth_drive/results/
+/f1tenth_drive/eval_tracking/
+/eval_out*/
